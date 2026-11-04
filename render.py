@@ -10,12 +10,15 @@ Usage:
     python3 prototype.py --out my.mp4
 """
 import argparse
+import os
 import math
 import random
 import subprocess
 import sys
 
 from PIL import Image, ImageDraw, ImageFont
+
+import audio
 
 # ---------------- Config ----------------
 W, H = 135, 240          # low-res canvas (pixel art)
@@ -295,11 +298,16 @@ def compose(t, fonts_cache, plan):
 def render(out_path, plan=None):
     plan = plan or DEFAULT_PLAN
     total = len(plan) * SCENE_LEN
+    wav = out_path + ".wav"
+    import voice
+    clips = voice.make_clips(plan, os.path.dirname(os.path.abspath(out_path)), SCENE_LEN - 0.8)
+    audio.make_audio(wav, plan, SCENE_LEN, seed=sum(map(ord, plan[0]["caption"])), voices=clips)
     n_frames = int(total * FPS)
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24",
-           "-s", f"{OUT_W}x{OUT_H}", "-r", str(FPS), "-i", "-",
+           "-s", f"{OUT_W}x{OUT_H}", "-r", str(FPS), "-i", "-", "-i", wav,
            "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20",
-           "-preset", "veryfast", "-movflags", "+faststart", out_path]
+           "-preset", "veryfast", "-c:a", "aac", "-b:a", "160k", "-shortest",
+           "-movflags", "+faststart", out_path]
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     cache = {}
     for i in range(n_frames):
@@ -307,6 +315,9 @@ def render(out_path, plan=None):
     proc.stdin.close()
     if proc.wait() != 0:
         sys.exit("ffmpeg failed")
+    os.remove(wav)
+    for c in clips or []:
+        os.remove(c)
     print(f"wrote {out_path} ({total:.0f}s, {n_frames} frames)")
 
 
