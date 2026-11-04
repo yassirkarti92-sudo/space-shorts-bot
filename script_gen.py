@@ -1,8 +1,9 @@
 """Asks Groq (free tier) to write the script: 4 scenes, one fact each."""
-import json, os, urllib.request
+import json, os, urllib.error, urllib.request
 import render
 
-MODEL = "llama-3.3-70b-versatile"
+BASE = "https://api.groq.com/openai/v1"
+PREFERRED = ["llama-3.3-70b-versatile", "openai/gpt-oss-120b", "openai/gpt-oss-20b", "llama-3.1-8b-instant"]
 TYPES = {"planets", "sizes", "zoom", "rocket"}
 PROMPT = """You write scripts for 24-second vertical "Space Facts" shorts.
 Return ONLY JSON: {"hashtags": ["#space", ...max 5], "scenes": [exactly 4 objects]}
@@ -18,23 +19,51 @@ Rules:
 - Do not repeat these recent facts: {recent}"""
 
 
-def ask_groq(recent):
-    body = {
-        "model": MODEL, "temperature": 0.5,
-        "response_format": {"type": "json_object"},
-        "messages": [
-            {"role": "system", "content": PROMPT.replace("{recent}", "; ".join(recent[-30:]) or "none")},
-            {"role": "user", "content": "Write one new script now."},
-        ],
-    }
+def _call(path, body=None):
     req = urllib.request.Request(
-        "https://api.groq.com/openai/v1/chat/completions",
-        data=json.dumps(body).encode(),
+        BASE + path,
+        data=json.dumps(body).encode() if body else None,
         headers={"Authorization": "Bearer " + os.environ["GROQ_API_KEY"],
                  "Content-Type": "application/json", "User-Agent": "space-shorts-bot/1.0"},
     )
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return json.loads(json.load(r)["choices"][0]["message"]["content"])
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            return json.load(r)
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f"Groq {path} HTTP {e.code}: {e.read().decode()[:300]}")
+
+
+_model = None
+
+
+def pick_model():
+    global _model
+    if _model is None:
+        ids = {m["id"] for m in _call("/models")["data"]}
+        print("Groq models available:", sorted(ids))
+        _model = next((m for m in PREFERRED if m in ids), None)
+        if _model is None:
+            raise RuntimeError("none of the preferred models is available")
+        print("Using model:", _model)
+    return _model
+
+
+def ask_groq(recent):
+    messages = [
+        {"role": "system", "content": PROMPT.replace("{recent}", "; ".join(recent[-30:]) or "none")},
+        {"role": "user", "content": "Write one new script now. Output JSON only."},
+    ]
+    body = {"model": pick_model(), "temperature": 0.5, "messages": messages,
+            "response_format": {"type": "json_object"}}
+    try:
+        res = _call("/chat/completions", body)
+    except RuntimeError as e:
+        if "HTTP 400" not in str(e):
+            raise
+        del body["response_format"]  # some models reject JSON mode
+        res = _call("/chat/completions", body)
+    text = res["choices"][0]["message"]["content"]
+    return json.loads(text[text.index("{"): text.rindex("}") + 1])
 
 
 def validate(data):
