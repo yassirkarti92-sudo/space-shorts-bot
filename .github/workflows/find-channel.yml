@@ -1,0 +1,13 @@
+name: find-channel
+on: workflow_dispatch
+jobs:
+  find:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          K: ${{ secrets.BUFFER_KEY }}
+        run: |
+          H='Content-Type: application/json'
+          ORG=$(curl -s -X POST https://api.buffer.com -H "$H" -H "Authorization: Bearer $K" -d '{"query":"query { account { organizations { id } } }"}' | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['account']['organizations'][0]['id'])")
+          echo "ORG: $ORG"
+          curl -s -X POST https://api.buffer.com -H "$H" -H "Authorization: Bearer $K" -d "{\"query\":\"query { channels(input:{organizationId:\\\"$ORG\\\"}) { id name service } }\"}"
