@@ -1,22 +1,50 @@
 """Asks Groq (free tier) to write the script: 4 scenes, one fact each."""
-import json, os, urllib.error, urllib.request
+import json, os, random, urllib.error, urllib.request
 import render
 
 BASE = "https://api.groq.com/openai/v1"
 PREFERRED = ["llama-3.3-70b-versatile", "openai/gpt-oss-120b", "openai/gpt-oss-20b", "llama-3.1-8b-instant"]
 TYPES = {"planets", "sizes", "zoom", "rocket"}
-PROMPT = """You write scripts for 24-second vertical "Space Facts" shorts.
-Return ONLY JSON: {"hashtags": ["#space", ...max 5], "scenes": [exactly 4 objects]}
-Each scene: {"scene": "planets|sizes|zoom|rocket", "caption": "...", "label": "..."}
-Rules:
-- Use each scene type exactly once, in the order that tells the best story.
-- The first caption is a hook: a surprising number or question that makes people keep watching.
-- The last caption ends with a punchy line that makes people follow or comment.
-- Each caption: max 12 words, plain English, ONE well-known fact verified by NASA/ESA. Never guess or invent numbers.
-- label: max 3 words, ALL CAPS, summarising the fact.
-- Scene meanings: planets = solar system and orbits, sizes = comparing planet sizes,
-  zoom = stars, the Sun, light and distances, rocket = spaceflight and speed.
-- Do not repeat these recent facts: {recent}"""
+ANGLES = [
+    "extreme scale (huge or tiny)", "time: how long things take or last",
+    "speed and motion", "temperature extremes",
+    "things that sound fake but are true", "what would happen if you were really there",
+    "records and extremes of the solar system", "space compared with everyday life",
+]
+
+PROMPT = """You are a viral short-form video scriptwriter AND editor (TikTok, Reels, Shorts) in the space niche.
+Write ONE 24-second "Space Facts" video: 4 scenes of about 6 seconds. Every caption is also READ ALOUD by a
+narrator, so write for the ear.
+
+STORY STRUCTURE (professional retention editing):
+1. HOOK (scene 1): a spike in the first 2 seconds. MAX 9 words. Open on a shocking number, a contradiction,
+   or a challenge to what viewers believe. Never start with "Did you know", "Today", "Welcome" or a greeting.
+2. BUILD (scene 2): deepen the curiosity with the surprising detail or the scale. Make a comparison the viewer
+   can picture using everyday things (a city, a car, a stadium, a lifetime).
+3. TWIST (scene 3): a pattern interrupt. The most mind-blowing fact, a change of direction.
+4. PAYOFF + LOOP (scene 4): resolve in one punchy line, then end so it flows back into the hook or asks a
+   question that makes people comment.
+
+WRITING RULES:
+- Each caption: max 12 words (hook max 9). One idea. Concrete numbers, active verbs, short everyday words.
+- The 4 captions are ONE connected story, not 4 unrelated facts. Each caption makes the viewer need the next one.
+- Make the viewer feel something: awe, fear or disbelief. Cut every filler word. Numbers must be easy to say aloud.
+- Strictly true. One fact per caption, verified by NASA or ESA. Say "about" for rounded numbers. Never guess or invent.
+- Today's angle: {angle}. Choose a topic that fits it.
+
+SCENES (use each type exactly once; choose the order so what is on screen matches the caption):
+- planets = the Sun with Mercury, Venus, Earth and Mars orbiting (solar system, orbits, years, distances)
+- sizes = Jupiter growing next to a tiny Earth (sizes and scale)
+- zoom = warp-speed zoom toward the Sun (the Sun, stars, light, distances)
+- rocket = a rocket launching with Earth below (spaceflight, speed, escaping gravity)
+
+OUTPUT: JSON only, in this order:
+{"hook_candidates": [5 different hooks, max 9 words each],
+ "topic": "...",
+ "hashtags": ["#space", ...max 5],
+ "scenes": [4 objects: {"scene": "planets|sizes|zoom|rocket", "caption": "...", "label": "MAX 3 WORDS CAPS"}]}
+Scene 1's caption must be the best of your 5 hook candidates.
+Do not repeat these recent facts: {recent}"""
 
 
 def _call(path, body=None):
@@ -50,10 +78,10 @@ def pick_model():
 
 def ask_groq(recent):
     messages = [
-        {"role": "system", "content": PROMPT.replace("{recent}", "; ".join(recent[-30:]) or "none")},
+        {"role": "system", "content": PROMPT.replace("{recent}", "; ".join(recent[-30:]) or "none").replace("{angle}", random.choice(ANGLES))},
         {"role": "user", "content": "Write one new script now. Output JSON only."},
     ]
-    body = {"model": pick_model(), "temperature": 0.5, "messages": messages,
+    body = {"model": pick_model(), "temperature": 0.7, "messages": messages,
             "response_format": {"type": "json_object"}}
     try:
         res = _call("/chat/completions", body)
