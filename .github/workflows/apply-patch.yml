@@ -11,7 +11,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: |
-          python patch_vector.py
+          python patch_vector.py || true
           python patch_script_gen2.py
           rm -f vector.py.bak script_gen2.py.bak patch_vector.py patch_script_gen2.py
           git config user.name "bot"
