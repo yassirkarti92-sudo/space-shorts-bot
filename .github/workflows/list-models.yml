@@ -16,23 +16,23 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           cat > probe.py << 'EOF'
-          import base64
           from google import genai
+          from google.genai import types
           c = genai.Client()
-          for name in ["gemini-3.8-flash-tts", "models/gemini-3.8-flash-tts", "gemini-3.8-flash-lite-tts"]:
+          for name in ["gemini-3.1-flash-tts-preview", "gemini-2.5-flash-preview-tts", "gemini-2.5-pro-preview-tts"]:
               try:
-                  i = c.interactions.create(
+                  r = c.models.generate_content(
                       model=name,
-                      input=[{"type": "user_input", "content": [{
-                          "type": "text", "text": "Testing one two three.",
-                          "annotations": [{"type": "speech_metadata", "style": "monotone and flat"}]}]}],
-                      response_format={"type": "audio"},
-                      generation_config={"speech_config": [{"voice": "Kore"}]},
+                      contents="Say flatly: testing one two three.",
+                      config=types.GenerateContentConfig(
+                          response_modalities=["AUDIO"],
+                          speech_config=types.SpeechConfig(
+                              voice_config=types.VoiceConfig(
+                                  prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name="Kore")))),
                   )
-                  n = len(base64.b64decode(i.output_audio.data))
+                  n = len(r.candidates[0].content.parts[0].inline_data.data)
                   print("OK", name, n, "bytes")
-                  break
               except Exception as e:
-                  print("FAIL", name, str(e)[:200])
+                  print("FAIL", name, str(e)[:160])
           EOF
           python probe.py
