@@ -7,13 +7,18 @@ import csv
 import json
 import os
 import pathlib
+import functools
 import urllib.error
 import urllib.request
 
 import render2
 import vector
 
-GEMINI_MODEL = os.environ.get("GEMINI_TEXT_MODEL", "gemini-3.8-flash")
+# Tried in this order. When one is overloaded (503), slow or out of free quota (429), the next one is used.
+GEMINI_MODELS = [m.strip() for m in os.environ.get(
+    "GEMINI_TEXT_MODELS", "gemini-3.8-flash,gemini-3.5-flash,gemini-2.5-flash,gemini-flash-latest").split(",")
+    if m.strip()]
+GEMINI_TIMEOUT = 75
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent"
 GROQ_BASE = "https://api.groq.com/openai/v1"
 GROQ_MODELS = ["llama-3.3-70b-versatile", "openai/gpt-oss-120b", "openai/gpt-oss-20b", "llama-3.1-8b-instant"]
@@ -146,17 +151,18 @@ def _json_from(text):
 
 
 # ---------- Gemini ----------
-def ask_gemini(system, user):
+def ask_gemini(system, user, model=None):
+    model = model or GEMINI_MODELS[0]
     body = {
         "systemInstruction": {"parts": [{"text": system}]},
         "contents": [{"role": "user", "parts": [{"text": user}]}],
         "generationConfig": {"temperature": 0.8, "responseMimeType": "application/json"},
     }
     req = urllib.request.Request(
-        GEMINI_URL.format(GEMINI_MODEL), data=json.dumps(body).encode(),
+        GEMINI_URL.format(model), data=json.dumps(body).encode(),
         headers={"x-goog-api-key": os.environ["GEMINI_API_KEY"], "Content-Type": "application/json"})
     try:
-        with urllib.request.urlopen(req, timeout=120) as r:
+        with urllib.request.urlopen(req, timeout=GEMINI_TIMEOUT) as r:
             res = json.load(r)
     except urllib.error.HTTPError as e:
         if e.code == 429:
@@ -249,7 +255,8 @@ def generate(recent):
 
     engines = []
     if os.environ.get("GEMINI_API_KEY"):
-        engines.append(("Gemini", ask_gemini, 2))
+        for m in GEMINI_MODELS:
+            engines.append((m, functools.partial(ask_gemini, model=m), 1))
     if os.environ.get("GROQ_API_KEY"):
         engines.append(("Groq", ask_groq, 2))
     if not engines:
@@ -262,7 +269,7 @@ def generate(recent):
                 print(f"{name} script accepted ({len(plan)} scenes).")
                 return plan, tags, True, subject
             except LimitReached:
-                print("*** GEMINI FREE LIMIT REACHED (HTTP 429): trying the fallback. ***")
+                print(f"*** FREE LIMIT REACHED for {name} (HTTP 429): trying the next engine. ***")
                 break
             except Exception as e:
                 print(f"{name} attempt {n} failed:", str(e)[:200])
