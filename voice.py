@@ -1,17 +1,15 @@
-# voice.py - Gemini TTS, one request per video, Piper as fallback
-import json, os, re, wave
+# voice.py - Gemini 3.8 TTS (Interactions API), Piper as fallback in main.py
+import base64, json, os, re, wave
 from google import genai
-from google.genai import types
 
 MODEL = "gemini-3.8-flash-tts"
 VOICE = "Bodi"
 RATE = 24000
-MAX_WORDS_PER_REQUEST = 220   # above this, split into chunks (max 3)
+MAX_WORDS_PER_REQUEST = 220
 STATUS_FILE = "voice_status.json"
 
-STYLE = ("flat, monotone, matter-of-fact, fast pace, no pauses between "
-         "sentences, no emotion, no emphasis, like a bored engineer "
-         "reading a manual")
+# Short on purpose: the docs say long style blocks make the voice drift.
+STYLE = "monotone and flat, speaking rapidly, deadpan, no emotion"
 
 
 class VoiceLimitReached(Exception):
@@ -30,31 +28,29 @@ def _chunks(text):
         cur.append(s)
         count += len(s.split())
         if count >= target and len(out) < n - 1:
-            out.append(" ".join(cur)); cur, count = [], 0
+            out.append(" ".join(cur))
+            cur, count = [], 0
     if cur:
         out.append(" ".join(cur))
     return out
 
 
 def _request(client, text):
-    # TEST 1: style passed as a labelled section before the transcript.
-    # If you hear the style words spoken aloud, switch to the style field
-    # or the config option AI Studio shows for it.
-    prompt = f"## Style:\n{STYLE}\n\n## Transcript:\n{text}"
-    cfg = types.GenerateContentConfig(
-        temperature=1,
-        response_modalities=["audio"],
-        speech_config=types.SpeechConfig(
-            voice_config=types.VoiceConfig(
-                prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=VOICE)
-            )
-        ),
+    interaction = client.interactions.create(
+        model=MODEL,
+        input=[{
+            "type": "user_input",
+            "content": [{
+                "type": "text",
+                "text": text,
+                "annotations": [{"type": "speech_metadata", "style": STYLE}],
+            }],
+        }],
+        # raw PCM so several chunks can be joined safely
+        response_format={"type": "audio", "mime_type": "audio/l16", "sample_rate": RATE},
+        generation_config={"speech_config": [{"voice": VOICE}]},
     )
-    resp = client.models.generate_content(model=MODEL, contents=prompt, config=cfg)
-    for part in resp.candidates[0].content.parts:
-        if part.inline_data and part.inline_data.data:
-            return part.inline_data.data   # raw 16-bit PCM, 24 kHz mono
-    raise RuntimeError("no audio in response")
+    return base64.b64decode(interaction.output_audio.data)
 
 
 def synthesize(text, out_path="narration.wav"):
@@ -77,6 +73,8 @@ def synthesize(text, out_path="narration.wav"):
             raise VoiceLimitReached(msg)
         raise
     with wave.open(out_path, "wb") as w:
-        w.setnchannels(1); w.setsampwidth(2); w.setframerate(RATE)
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(RATE)
         w.writeframes(pcm)
     return out_path, len(pcm) / (2 * RATE)
