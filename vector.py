@@ -1,13 +1,16 @@
 """vector.py - flat 2D vector scene engine (story style).
 Draws on a 540x960 canvas. In a scene description, x and sizes (s, h) are PERCENT of
-the width, y is PERCENT of the height. render_scene() returns a 1080x1920 image."""
+the width, y is PERCENT of the top 62% of the height (captions use the rest). render_scene() returns a 1080x1920 image."""
 import math
 import random
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 CW, CH = 540, 960
 OUT_W, OUT_H = 1080, 1920
+# Scene y positions (0..100) map to the TOP part of the screen only. The bottom
+# part is kept free for the captions (render2.CAP_REGION starts at 1230/1920 = 0.64).
+SAFE_Y = 0.62
 FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 
 COLORS = {
@@ -53,7 +56,7 @@ def px(v):
 
 
 def py(v):
-    return v / 100.0 * CH
+    return v / 100.0 * CH * SAFE_Y
 
 
 # ---------- validation: a broken description is rejected, never drawn ----------
@@ -179,43 +182,67 @@ def pop_scale(e, t):
 
 
 # ---------- elements ----------
+def _pill(d, x0, y0, x1, y1, w, fill):
+    """Straight limb with round ends (a pill)."""
+    d.line([(x0, y0), (x1, y1)], fill=fill, width=int(w))
+    r = w / 2
+    for cx, cy in ((x0, y0), (x1, y1)):
+        d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=fill)
+
+
 def figure_layer(Hf, body, head, hair, eyes, arm_up):
+    """Pill-shaped figure, oversized round head, glowing oval eyes, no mouth, no outline."""
     Hf = max(8, int(Hf))
     L = int(Hf * 1.5)
     im = Image.new("RGBA", (L, L), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
-    ox, top, r = L / 2, (L - Hf) / 2, 0.2 * Hf
-    lw = max(2, int(0.07 * Hf))
-    limb = (50, 58, 75)
+    ox, top = L / 2, (L - Hf) / 2
+    r = 0.27 * Hf
+    bw = 0.17 * Hf
+    body_top, body_bot = top + 1.5 * r, top + 0.84 * Hf
+    limb = tuple(int(c * 0.8) for c in body)
     for sx in (-1, 1):
-        d.line([(ox + sx * 0.07 * Hf, top + 0.72 * Hf), (ox + sx * 0.09 * Hf, top + Hf)], fill=limb, width=lw)
-    d.rounded_rectangle([ox - 0.16 * Hf, top + 2 * r - 0.02 * Hf, ox + 0.16 * Hf, top + 0.76 * Hf],
-                        radius=max(1, int(0.07 * Hf)), fill=body)
-    aw = max(2, int(0.06 * Hf))
-    d.line([(ox - 0.16 * Hf, top + 0.46 * Hf), (ox - 0.26 * Hf, top + 0.70 * Hf)], fill=body, width=aw)
-    hx, hy = (ox + 0.30 * Hf, top + 0.30 * Hf) if arm_up else (ox + 0.26 * Hf, top + 0.70 * Hf)
-    d.line([(ox + 0.16 * Hf, top + 0.46 * Hf), (hx, hy)], fill=body, width=aw)
-    hr = 0.035 * Hf
-    for cx, cy in ((ox - 0.26 * Hf, top + 0.70 * Hf), (hx, hy)):
-        d.ellipse([cx - hr, cy - hr, cx + hr, cy + hr], fill=head)
+        _pill(d, ox + sx * 0.08 * Hf, body_bot - 0.04 * Hf, ox + sx * 0.08 * Hf, top + Hf - 0.03 * Hf,
+              0.10 * Hf, limb)
+    d.rounded_rectangle([ox - bw, body_top, ox + bw, body_bot], radius=int(bw), fill=body)
+    aw = 0.075 * Hf
+    _pill(d, ox - bw + 0.02 * Hf, body_top + 0.07 * Hf, ox - bw - 0.05 * Hf, body_top + 0.30 * Hf, aw, limb)
+    if arm_up:
+        _pill(d, ox + bw - 0.02 * Hf, body_top + 0.07 * Hf, ox + bw + 0.12 * Hf, body_top - 0.10 * Hf, aw, limb)
+    else:
+        _pill(d, ox + bw - 0.02 * Hf, body_top + 0.07 * Hf, ox + bw + 0.05 * Hf, body_top + 0.30 * Hf, aw, limb)
     d.ellipse([ox - r, top, ox + r, top + 2 * r], fill=head)
-    d.pieslice([ox - r, top, ox + r, top + 2 * r], 190, 350, fill=hair)
-    ey = top + r + 0.03 * Hf
+    ey, spread = top + r + 0.01 * Hf, 0.105 * Hf
+    ew, eh = (0.11, 0.17) if eyes == "wide" else (0.085, 0.135)
+    glow = Image.new("RGBA", (L, L), (0, 0, 0, 0))
+    gd = ImageDraw.Draw(glow)
+    eye_col = COLORS["cyan"]
     for sx in (-1, 1):
-        ex = ox + sx * 0.08 * Hf
+        ex = ox + sx * spread
         if eyes == "closed":
-            d.line([(ex - 0.05 * Hf, ey), (ex + 0.05 * Hf, ey)], fill=COLORS["dark"], width=max(2, int(0.02 * Hf)))
+            box = [ex - 0.07 * Hf, ey - 0.012 * Hf, ex + 0.07 * Hf, ey + 0.012 * Hf]
         else:
-            rx, ry, pr = (0.08, 0.095, 0.02) if eyes == "wide" else (0.06, 0.07, 0.025)
-            d.ellipse([ex - rx * Hf, ey - ry * Hf, ex + rx * Hf, ey + ry * Hf], fill=COLORS["white"])
-            d.ellipse([ex - pr * Hf, ey - pr * Hf, ex + pr * Hf, ey + pr * Hf], fill=COLORS["dark"])
+            box = [ex - ew * Hf / 2, ey - eh * Hf / 2, ex + ew * Hf / 2, ey + eh * Hf / 2]
+        grow = 0.045 * Hf
+        gd.ellipse([box[0] - grow, box[1] - grow, box[2] + grow, box[3] + grow], fill=eye_col + (170,))
+    glow = glow.filter(ImageFilter.GaussianBlur(max(1, 0.045 * Hf)))
+    im.alpha_composite(glow)
+    d = ImageDraw.Draw(im)
+    for sx in (-1, 1):
+        ex = ox + sx * spread
+        if eyes == "closed":
+            d.rounded_rectangle([ex - 0.07 * Hf, ey - 0.012 * Hf, ex + 0.07 * Hf, ey + 0.012 * Hf],
+                                radius=max(1, int(0.012 * Hf)), fill=eye_col)
+        else:
+            d.ellipse([ex - ew * Hf / 2, ey - eh * Hf / 2, ex + ew * Hf / 2, ey + eh * Hf / 2],
+                      fill=(235, 252, 255))
     return im
 
 
 def draw_figure(img, e, t, sc):
     x, y = place(e, t)
     Hf = px(e["s"]) * sc
-    layer = figure_layer(Hf, COLORS[e.get("body", "cyan")], COLORS[e.get("head", "skin")],
+    layer = figure_layer(Hf, COLORS[e.get("body", "cyan")], COLORS[e.get("head", "gray")],
                          COLORS[e.get("hair", "dark")], e.get("eyes", "open"), e.get("arm_up", False))
     angle = e.get("angle", 0) + (90 if e.get("pose") == "lie" else 0)
     if angle:
@@ -334,7 +361,7 @@ def draw_timer(d, e, t, sc):
     l, tp, r, b = d.textbbox((0, 0), label, font=f)
     tw, th = r - l, b - tp
     pad = th * 0.6
-    right, cy = CW - 34, py(9)
+    right, cy = CW - 34, 0.09 * CH
     d.rounded_rectangle([right - tw - 2 * pad, cy - th / 2 - pad * 0.7, right, cy + th / 2 + pad * 0.7],
                         radius=int(th * 0.6), fill=(8, 9, 14, 220), outline=COLORS["cyan"], width=3)
     d.text((right - pad - tw / 2, cy), label, font=f, fill=COLORS["cyan"], anchor="mm")
