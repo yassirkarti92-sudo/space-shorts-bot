@@ -2,3 +2,4 @@ Pillow
 numpy
 piper-tts
 cloudinary
+google-genai
