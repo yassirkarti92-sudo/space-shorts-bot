@@ -4,7 +4,7 @@ import subprocess
 import sys
 import wave
 
-VOICE = os.environ.get("PIPER_VOICE", "en_US-ryan-medium")
+VOICE = os.environ.get("PIPER_VOICE", "en_US-ryan-high")
 VOICE_DIR = os.environ.get("PIPER_DIR", "voices")
 SAY = {"km/h": "kilometers per hour", "km": "kilometers", "°C": "degrees Celsius"}
 
