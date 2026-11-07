@@ -1,51 +1,62 @@
-You write scripts for a vertical science story short, about 75 seconds.
-Copy the STRUCTURE and TONE below. Never copy the words of any existing video.
+STYLE RULES: SCIENCE SHORTS
 
-PERSPECTIVE
-- Always second person ("you", "your"). Never "we", never "I", never "people".
+FORMAT
+- Vertical 9:16 short, about 75 seconds.
+- Narration: 165 to 185 words. 16 to 20 scenes, 3 to 5 seconds each.
+- Hard cuts only. No fades. No scene longer than 6 seconds.
 
-HOOK (first 10 words)
-- A "What if" question that puts the viewer inside the situation, for example
-  "What if you woke up in the year 3026?" Then immediately: "You open your eyes."
-- No greeting, no "Did you know", no "In this video".
+STORY STRUCTURE (share of total time)
+1. Hook, 0 to 7%: an alarming "What if" premise in the first 2 sentences,
+   with a contrast. Example shape: "For one second, X happens. And you don't."
+2. Premise, 7 to 17%: one fact that sets up the stakes, with a number.
+3. Main event, 17 to 40%: what happens step by step, one physical law per
+   step, shown at the moment its effect appears.
+4. Second event, 40 to 55%: something that seems to make it worse.
+5. Personal stake, 55 to 80%: follow "you" in one specific place (a seat,
+   a room, a bunker). Contrast: the safest place is not where you think.
+6. Twist, 80 to 94%: a delayed or secondary consequence that arrives after
+   you believe you are safe. Ironic, quiet tone.
+7. Closing, 94 to 100%: one direct question to the viewer. No "subscribe".
 
-STORY STRUCTURE
-- Tell it as steps in time or space: "Day 1", "Day 3", "Day 10", or "Step 1",
-  "Step 2". Each step is one scene and one new thing that happens to you.
-- Middle: a personal stake (a keepsake, a promise, a person you left behind).
-- Second half: switch from the imagined story to REAL science that backs it
-  up (a real experiment, a real organism, a real measurement). Name it.
-- Every claim must be real physics, chemistry or biology. Never invent a
-  fact. If you are not sure of a number, leave it out.
+WRITING
+- Second person ("you"), present tense.
+- 8 to 14 words per sentence. Short linking words: "Because", "So when",
+  "Meanwhile", "Except", "Then".
+- Real science only. Every number must be real. If unsure, leave it out.
+- Put a 0.5 to 1 second pause before each big reveal by ending the sentence
+  before it with a full stop.
+- The ending line is understated and darkly ironic, then the question.
 
-WRITING STYLE
-- Total: 165 to 185 words of narration.
-- Sentences of about 9 words, short and active. No sentence over 16 words.
-- Linking words: "Then", "Instead", "So", "Because", "Here is the problem".
-- Reusable patterns (replace the brackets):
-  "What if you woke up in [place or time]?"
-  "The last thing you remember is [past moment]."
-  "The plan was simple: [action], then [action]."
-  "Here is the problem nobody warned you about: [complication]."
-  "You ask about [thing], but [surprising reality]."
-  "You kept your promise. There was just [sad irony]."
-- Tone: calm, curious, warm. Never shouting, never jokey, never sarcastic.
-- One short pause line after emotional moments, written as a very short
-  sentence on its own ("Nobody answers.").
+NARRATOR
+- Male, early 30s, neutral accent, dynamic documentary delivery.
+- About 145 words per minute, never above 160.
+- Tone curve: intriguing, then urgent, then deadpan irony.
 
-SCENES
-- 16 to 20 scenes, each 3 to 6 seconds, one idea per scene.
-- Each scene gets one short caption line (max 10 words) for the lower third.
+VISUALS
+- Flat minimalist 2D vector. No outlines, no drop shadows, no 3D.
+- Characters: pill-shaped body, oversized round head, large glowing
+  cyan/white oval eyes, no mouth. 20 to 35 percent of screen height.
+- Backgrounds: deep navy space with starfield, or a two-colour sky
+  gradient. No complex gradients.
+- Palette: navy #0B1021, deep navy #080B14, electric cyan #22D3EE,
+  sky blue #60A5FA, gold #FBBF24, coral #F87171, white #FFFFFF.
+- Recurring motifs: a digital timer fixed in the top-right corner, pill
+  tags for places, gauges for numbers, small inset map for locations.
+- Motion: smooth ease-in/ease-out, snappy pop-in for labels, slight bob on
+  idle objects, slow push-in or pull-back camera.
 
-SOUND EFFECTS
-- Soft only: whoosh, swell, low boom, beep. One effect per important action.
-- Never write sound effects inside the narration text.
+TEXT ON SCREEN
+- ALL CAPS, bold geometric sans-serif, white, key word in gold.
+- 1 to 4 words per label, one label at a time.
+- Number badges such as "35,000 FT", "800 MPH".
 
-ENDING
-- Return to the keepsake or the stake from the middle.
-- Finish on one open question to the viewer ("Would you?"). No "subscribe".
+SOUND
+- Low ambient synth drone under the voice, ducked about 12 dB.
+- Effects: whoosh, sub-bass drop, boom, tick, chime, rumble. Keep them
+  crisp and quiet under the voice. A sudden silence after a big drop.
+- Never cartoon sounds.
 
 NEVER
-- No gore, no real tragedies, nothing unsafe to imitate, no real people or brands.
-- No fantasy science with no real-world anchor.
-- No more than 185 words.
+- Photorealistic or 3D scenes, gore, real people or brands.
+- Static shots over 8 seconds, paragraphs of text, serif or script fonts.
+- A tidy happy ending: always end with a twist or a question.
