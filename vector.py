@@ -36,7 +36,7 @@ EYES = ("open", "closed", "wide")
 POSES = ("stand", "lie")
 CAMERAS = ("push", "pull", "static")
 MAX_ELEMENTS = 22
-MIN_ELEMENTS = 4
+MIN_ELEMENTS = 3
 TYPES = TYPES + scenery.TYPES
 NEEDS_SIZE = NEEDS_SIZE + scenery.NEEDS_SIZE
 
