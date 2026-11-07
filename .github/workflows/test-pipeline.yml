@@ -12,7 +12,7 @@ jobs:
         with:
           python-version: "3.11"
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg fonts-dejavu-core
-      - run: pip install -r requirements.txt
+      - run: pip install -r requirements.txt faster-whisper
       - name: Run the pipeline
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
