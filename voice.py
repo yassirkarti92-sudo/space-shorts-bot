@@ -103,3 +103,7 @@ def synthesize(text, out_path="narration.wav"):
         w.setframerate(rate)
         w.writeframes(pcm)
     return out_path, len(pcm) / (2 * rate)
+def make_clips(plan, outdir, max_len):
+    """Temporary stub: the old per-scene Piper voice is gone, so videos are
+    music-only until the new one-voice-per-video pipeline is wired in."""
+    return None
