@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
-"""render2.py - story-style vertical video: flat 2D scenes, hard cuts, lower-third captions."""
+"""render2.py - story-style vertical video: flat 2D scenes, hard cuts, lower-third captions.
+Scene cuts follow the REAL word times of the voice (faster-whisper), so the picture never drifts."""
+import difflib
 import os
+import re
 import subprocess
 import sys
 
@@ -14,6 +17,8 @@ OUT_W, OUT_H = vector.OUT_W, vector.OUT_H
 LEAD = 0.45            # narration starts this long after the video starts
 TAIL = 1.5             # silence at the end
 MIN_SCENE = 1.8
+MIN_ALIGNED = 0.9      # shortest scene allowed when cuts follow the voice
+PRE_ROLL = 0.08        # a cut happens this long before its first word
 WORDS_PER_SEC = 2.4    # used only when there is no real narration length
 
 CAP_REGION = (0, 1230, OUT_W, 1790)
@@ -70,8 +75,57 @@ def draw_caption(img, layout, alpha):
     img.paste(Image.alpha_composite(region, ov).convert("RGB"), CAP_REGION[:2])
 
 
-def scene_durations(plan, narration_secs):
-    """Share the narration time between scenes by word count."""
+# ---------- timing ----------
+def _norm(w):
+    return re.sub(r"[^a-z0-9]", "", w.lower())
+
+
+def align_times(plan, ww):
+    """ww = [(word, start, end)] from the voice. Returns the voice time at which each scene starts."""
+    import numpy as np
+    sw, first = [], []
+    for p in plan:
+        first.append(len(sw))
+        sw += [x for x in (_norm(w) for w in str(p.get("narration") or p["caption"]).split()) if x]
+    heard = [x[0] for x in ww]
+    sm = difflib.SequenceMatcher(None, sw, heard, autojunk=False)
+    kx, kt = [], []
+    for a, b, n in sm.get_matching_blocks():
+        for k in range(n):
+            kx.append(a + k)
+            kt.append(ww[b + k][1])
+    if len(kx) < 0.5 * len(sw):
+        raise RuntimeError(f"only {len(kx)} of {len(sw)} words matched")
+    times = np.maximum.accumulate(np.interp(first, kx, kt))
+    return [float(t) for t in times]
+
+
+def voice_words(audio_path):
+    from faster_whisper import WhisperModel
+    model = WhisperModel("base", device="cpu", compute_type="int8")
+    segs, _ = model.transcribe(audio_path, language="en", word_timestamps=True, beam_size=1)
+    ww = [(_norm(w.word), w.start, w.end) for s in segs for w in (s.words or [])]
+    ww = [x for x in ww if x[0]]
+    if not ww:
+        raise RuntimeError("no words heard")
+    return ww
+
+
+def scene_durations(plan, narration_secs, narration_path=None):
+    n = len(plan)
+    if narration_path and os.path.exists(str(narration_path)):
+        try:
+            ww = voice_words(str(narration_path))
+            times = align_times(plan, ww)
+            starts = [0.0] + [LEAD + t - PRE_ROLL for t in times[1:]]
+            for i in range(1, n):
+                starts[i] = max(starts[i], starts[i - 1] + MIN_ALIGNED)
+            end = LEAD + ww[-1][2] + TAIL
+            durs = [starts[i + 1] - starts[i] for i in range(n - 1)] + [max(1.2, end - starts[-1])]
+            print("scene cuts follow the real voice timing")
+            return durs
+        except Exception as e:
+            print("voice alignment failed, using word share:", str(e)[:200])
     words = [max(1, len(str(p.get("narration") or p.get("caption", "")).split())) for p in plan]
     total = sum(words)
     speech = narration_secs if narration_secs else total / WORDS_PER_SEC
@@ -83,7 +137,7 @@ def scene_durations(plan, narration_secs):
 
 def render(out_path, plan, narration=None, narration_secs=None):
     n = len(plan)
-    durs = scene_durations(plan, narration_secs)
+    durs = scene_durations(plan, narration_secs, narration)
     starts = [sum(durs[:i]) for i in range(n)]
     total = sum(durs)
 
