@@ -1,0 +1,23 @@
+name: List models
+
+on:
+  workflow_dispatch:
+
+jobs:
+  list:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install "google-genai>=2.25.0"
+      - name: Show models
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python -c "
+          from google import genai
+          c = genai.Client()
+          for m in c.models.list():
+              print(m.name)
+          "
