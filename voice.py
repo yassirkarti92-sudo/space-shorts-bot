@@ -1,14 +1,13 @@
-# voice.py - Gemini 3.8 TTS (Interactions API), Piper as fallback in main.py
-import base64, json, os, re, wave
-from google import genai
+# voice.py - Gemini 3.8 TTS via plain HTTP (same endpoint AI Studio uses)
+import base64, io, json, os, re, urllib.request, urllib.error, wave
 
 MODEL = "gemini-3.8-flash-tts"
 VOICE = "Bodi"
 RATE = 24000
 MAX_WORDS_PER_REQUEST = 220
 STATUS_FILE = "voice_status.json"
+URL = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent"
 
-# Short on purpose: the docs say long style blocks make the voice drift.
 STYLE = "monotone and flat, speaking rapidly, deadpan, no emotion"
 
 
@@ -35,22 +34,47 @@ def _chunks(text):
     return out
 
 
-def _request(client, text):
-    interaction = client.interactions.create(
-        model=MODEL,
-        input=[{
-            "type": "user_input",
-            "content": [{
-                "type": "text",
-                "text": text,
-                "annotations": [{"type": "speech_metadata", "style": STYLE}],
-            }],
+def _request(key, text):
+    body = {
+        "contents": [{
+            "role": "user",
+            "parts": [{"text": text, "speech_metadata": {"style": STYLE}}],
         }],
-        # raw PCM so several chunks can be joined safely
-        response_format={"type": "audio", "mime_type": "audio/l16", "sample_rate": RATE},
-        generation_config={"speech_config": [{"voice": VOICE}]},
+        "generationConfig": {
+            "responseModalities": ["audio"],
+            "temperature": 1,
+            "speech_config": {
+                "voice_config": {"prebuilt_voice_config": {"voice_name": VOICE}}
+            },
+        },
+    }
+    req = urllib.request.Request(
+        URL,
+        data=json.dumps(body).encode("utf-8"),
+        headers={"Content-Type": "application/json", "x-goog-api-key": key},
+        method="POST",
     )
-    return base64.b64decode(interaction.output_audio.data)
+    try:
+        with urllib.request.urlopen(req, timeout=180) as r:
+            data = json.loads(r.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", errors="replace")[:500]
+        raise RuntimeError(f"HTTP {e.code}: {detail}")
+    for part in data["candidates"][0]["content"]["parts"]:
+        inline = part.get("inlineData") or part.get("inline_data")
+        if inline and inline.get("data"):
+            mime = inline.get("mimeType") or inline.get("mime_type") or ""
+            return base64.b64decode(inline["data"]), mime
+    raise RuntimeError("no audio in response: " + json.dumps(data)[:300])
+
+
+def _to_pcm(raw, mime):
+    """Return raw 16-bit mono PCM and its sample rate."""
+    if "wav" in mime.lower() or raw[:4] == b"RIFF":
+        with wave.open(io.BytesIO(raw)) as w:
+            return w.readframes(w.getnframes()), w.getframerate()
+    m = re.search(r"rate=(\d+)", mime)
+    return raw, int(m.group(1)) if m else RATE
 
 
 def synthesize(text, out_path="narration.wav"):
@@ -59,11 +83,12 @@ def synthesize(text, out_path="narration.wav"):
     key = os.environ.get("GEMINI_API_KEY")
     if not key:
         raise RuntimeError("GEMINI_API_KEY missing")
-    client = genai.Client(api_key=key)
-    pcm = b""
+    pcm, rate = b"", RATE
     try:
         for chunk in _chunks(text):
-            pcm += _request(client, chunk)
+            raw, mime = _request(key, chunk)
+            part, rate = _to_pcm(raw, mime)
+            pcm += part
     except Exception as e:
         msg = str(e)
         if "429" in msg or "RESOURCE_EXHAUSTED" in msg:
@@ -75,6 +100,6 @@ def synthesize(text, out_path="narration.wav"):
     with wave.open(out_path, "wb") as w:
         w.setnchannels(1)
         w.setsampwidth(2)
-        w.setframerate(RATE)
+        w.setframerate(rate)
         w.writeframes(pcm)
-    return out_path, len(pcm) / (2 * RATE)
+    return out_path, len(pcm) / (2 * rate)
