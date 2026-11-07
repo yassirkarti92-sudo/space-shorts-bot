@@ -9,6 +9,7 @@ import os
 import pathlib
 import functools
 import re
+import time
 import urllib.error
 import urllib.request
 
@@ -17,7 +18,7 @@ import vector
 
 # Tried in this order. When one is overloaded (503), slow or out of free quota (429), the next one is used.
 GEMINI_MODELS = [m.strip() for m in os.environ.get(
-    "GEMINI_TEXT_MODELS", "gemini-3.8-flash,gemini-3.5-flash,gemini-2.5-flash,gemini-flash-latest").split(",")
+    "GEMINI_TEXT_MODELS", "gemini-3.8-flash,gemini-3.5-flash,gemini-flash-latest").split(",")
     if m.strip()]
 GEMINI_TIMEOUT = 75
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent"
@@ -282,9 +283,9 @@ def generate(recent):
     engines = []
     if os.environ.get("GEMINI_API_KEY"):
         for m in GEMINI_MODELS:
-            engines.append((m, functools.partial(ask_gemini, model=m), 1))
+            engines.append((m, functools.partial(ask_gemini, model=m), 3))
     if os.environ.get("GROQ_API_KEY"):
-        engines.append(("Groq", ask_groq, 2))
+        engines.append(("Groq", ask_groq, 3))
     if not engines:
         raise SystemExit("No GEMINI_API_KEY or GROQ_API_KEY set.")
 
@@ -299,7 +300,8 @@ def generate(recent):
                 break
             except Exception as e:
                 print(f"{name} attempt {n} failed:", str(e)[:200])
-    raise SystemExit("Script generation failed - nothing posted.")
+                if n < tries:
+                    time.sleep(60 if "429" in str(e) else 20)
 
 
 if __name__ == "__main__":
