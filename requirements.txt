@@ -2,4 +2,4 @@ Pillow
 numpy
 piper-tts
 cloudinary
-google-genai
+google-genai>=2.25.0
