@@ -301,6 +301,8 @@ def validate(data):
                     and 0 <= fx["at"] <= 8):
                 sfx.append({"type": fx["type"], "at": float(fx["at"])})
         spec = s.get("spec")
+        if i == 1:
+            print("RAW SCENE 1:", json.dumps(s)[:1500])
         spec = repair_spec(spec)
         ok, why = vector.check_scene(spec) if spec else (False, "no spec")
         if not ok:
