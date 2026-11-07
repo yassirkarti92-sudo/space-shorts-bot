@@ -8,6 +8,7 @@ import json
 import os
 import pathlib
 import functools
+import re
 import urllib.error
 import urllib.request
 
@@ -30,7 +31,11 @@ RULES = pathlib.Path("style_rules.txt")
 SFX_TYPES = ("whoosh", "rumble", "swell", "boom")
 MIN_SCENES, MAX_SCENES = 12, 24
 MIN_WORDS, MAX_WORDS = 140, 215
+YOU_SHARE = 0.75        # at least this share of scenes must say you / your
 MAX_BROKEN = 4          # scenes the checker may reject before the whole script is thrown away
+
+
+YOU_RE = re.compile(r"\byou(?:r|rs|rself)?\b", re.I)
 
 
 class LimitReached(Exception):
@@ -215,7 +220,7 @@ def validate(data):
     scenes = data["scenes"]
     if not isinstance(scenes, list) or not MIN_SCENES <= len(scenes) <= MAX_SCENES:
         raise ValueError(f"need {MIN_SCENES} to {MAX_SCENES} scenes")
-    plan, broken, words = [], 0, 0
+    plan, broken, words, you_scenes = [], 0, 0, 0
     for i, s in enumerate(scenes, 1):
         narration = " ".join(str(s.get("narration", "")).split())
         caption = " ".join(str(s.get("caption", "")).split())
@@ -225,6 +230,10 @@ def validate(data):
             raise ValueError(f"scene {i}: caption is longer than 10 words")
         render2.fit_caption(caption)      # raises if it cannot fit on the screen
         words += len(narration.split())
+        if YOU_RE.search(narration):
+            you_scenes += 1
+        elif i <= 2:
+            raise ValueError(f"scene {i}: the first two scenes must say you / your")
         sfx = []
         for fx in s.get("sfx") or []:
             if (isinstance(fx, dict) and fx.get("type") in SFX_TYPES
@@ -238,6 +247,8 @@ def validate(data):
             broken += 1
             spec = vector.FALLBACK_SPEC
         plan.append({"narration": narration, "caption": caption, "sfx": sfx, "spec": spec})
+    if you_scenes < YOU_SHARE * len(scenes):
+        raise ValueError(f"only {you_scenes} of {len(scenes)} scenes say you / your")
     if broken > MAX_BROKEN:
         raise ValueError(f"{broken} broken scenes")
     if not MIN_WORDS <= words <= MAX_WORDS:
