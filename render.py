@@ -301,13 +301,13 @@ def compose(t, fonts_cache, plan):
     return Image.alpha_composite(big, ov).convert("RGB")
 
 
-def render(out_path, plan=None):
+def render(out_path, plan=None, narration=None):
     plan = plan or DEFAULT_PLAN
     total = len(plan) * SCENE_LEN
     wav = out_path + ".wav"
     import voice
     clips = voice.make_clips(plan, os.path.dirname(os.path.abspath(out_path)), SCENE_LEN - 0.8)
-    audio.make_audio(wav, plan, SCENE_LEN, seed=sum(map(ord, plan[0]["caption"])), voices=clips)
+    audio.make_audio(wav, plan, SCENE_LEN, seed=sum(map(ord, plan[0]["caption"])), voices=clips, narration=narration, speed=SPEED)
     n_frames = int(total * FPS)
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24",
            "-s", f"{OUT_W}x{OUT_H}", "-r", str(FPS), "-i", "-", "-i", wav,
