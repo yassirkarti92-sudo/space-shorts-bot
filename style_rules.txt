@@ -26,18 +26,27 @@ STORY STRUCTURE (share of total time)
    of immediate peril. Example shape: "What if X happened? You open your eyes. It already has."
 2. Premise, 7 to 17%: your location, your stake, and one fact that sets up the danger.
 3. Main event, 17 to 45%: what happens step by step. Dated steps like "Day 1", "Hour 2", "Minute 5"
-   work well. One physical law per step, introduced at the moment it hurts or helps you.
+   work well. Use ONE time unit only (hours or days), never both. One physical law per step,
+   introduced at the moment it hurts or helps you.
 4. Second event, 45 to 65%: something that seems to make it worse, or a decision you must make.
 5. Twist, 65 to 90%: a delayed or secondary consequence that arrives after you believe you are
    safe. Quiet, ironic tone.
 6. Ending, 90 to 100%: return to your keepsake or promise, then ONE open question to the viewer
    ("Would you?", "Where would you hide?"). Never "subscribe".
 
+STORY RHYTHM
+- Each event is bigger than the one before. Never repeat the same beat
+  (disaster, panic, disaster).
+- Keep the goal visible until the twist.
+- One calm, quiet scene right before the twist.
+
 WRITING
 - Second person ("you"), present tense.
 - 8 to 14 words per sentence. Short linking words: "Then", "So", "Because", "Meanwhile", "Except".
 - Put a full stop before every big reveal so the narrator can pause.
 - Caption: a short version of the narration, max 10 words, one important word in *stars*.
+- Caption words are copied from the narration. Only shorten, never reword.
+- Highlight the word that matters most.
 
 FACTS (strict)
 - Only well-established science that a good encyclopedia or NASA, ESA or NOAA would confirm.
@@ -48,23 +57,36 @@ FACTS (strict)
 - If you are not sure a fact is true, leave it out and use a different one.
 - Keep the story physically consistent: what you survive in one scene must still make sense in the next.
 
-NARRATOR
-- Male, early 30s, neutral accent, calm documentary delivery.
-- About 145 words per minute, never above 160.
-- Tone curve: intriguing, then urgent, then quiet irony.
-
 VISUALS
 - Flat minimalist 2D vector. No outlines, no drop shadows, no 3D.
 - Characters: pill-shaped body, oversized round head, glowing oval eyes, no mouth.
 - The main character "you" appears in most scenes, in the middle of the picture.
 - Palette: deep navy backgrounds, electric cyan, sky blue, gold, coral, white.
-- Recurring motifs: a digital timer in the top-right corner when time matters, a badge for every
-  number or date, a window or map to show the place.
+- Recurring motifs: a digital timer in the top-right corner only when seconds or minutes matter,
+  a badge for every number, date or place, icons for dangers.
 - Every scene must look different from the one before it.
+
+SCENE COMPOSITION (every scene)
+- Draw order: sky, far objects, ground or sea, figure, then icons, arrows, badges.
+  The ground or sea always comes BEFORE the figure.
+- Use ground OR sea, not both, unless the narration needs both.
+- At least 7 elements per scene. At least 2 of them use enter or pulse.
+- The figure stands on the ground or sea line. Never floating.
+- Draw the key object of the sentence (compass, cabin, rocket) with icons or shapes.
+  Never replace it with a heart icon.
+- Vary the figure: act (walk, run, point, wave, stand), body colour, flip.
+  Use panic in at most 3 scenes.
+- No two scenes in a row with the same background and the same camera.
+- Sky and scenery must match the narration (day sky only in daytime).
 
 TEXT ON SCREEN
 - Badges in UPPERCASE, 1 to 4 words: "DAY 3", "800 MPH", "35,000 FT".
 - One short label at a time. No paragraphs.
+
+NARRATOR
+- Male, early 30s, neutral accent, calm documentary delivery.
+- About 145 words per minute, never above 160.
+- Tone curve: intriguing, then urgent, then quiet irony.
 
 SOUND
 - Low ambient synth drone under the voice. Soft effects only: whoosh, rumble, swell, boom.
