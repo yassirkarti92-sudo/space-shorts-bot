@@ -19,6 +19,7 @@ import sys
 from PIL import Image, ImageDraw, ImageFont
 
 import audio
+import scenes
 
 # ---------------- Config ----------------
 W, H = 135, 240          # low-res canvas (pixel art)
@@ -255,7 +256,12 @@ def compose(t, fonts_cache, plan):
 
     low = Image.new("RGB", (W, H), BG)
     d = ImageDraw.Draw(low)
-    labels = SCENES[plan[idx]["scene"]](d, lt * SPEED)
+    spec = plan[idx].get("spec")
+    if spec and scenes.check_scene(spec)[0]:
+        labels = scenes.draw_scene(d, spec, lt * SPEED)
+    else:
+        name = plan[idx]["scene"] if plan[idx]["scene"] in SCENES else "zoom"
+        labels = SCENES[name](d, lt * SPEED)
     if plan[idx].get("label") and plan[idx]["scene"] != "sizes" and labels:
         labels = [(plan[idx]["label"].upper(),) + tuple(labels[0][1:])]
 
