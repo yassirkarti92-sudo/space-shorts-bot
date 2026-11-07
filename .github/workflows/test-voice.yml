@@ -1,0 +1,23 @@
+name: Test voice
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install google-genai
+      - name: Generate voice
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python -c "from voice import synthesize; print(synthesize('If you want a taller building, you add more floors. But now the base cracks under the weight. So you add a wider base. Except now it blocks the street. So you move the street. But now the river is in the way.'))"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: narration
+          path: narration.wav
