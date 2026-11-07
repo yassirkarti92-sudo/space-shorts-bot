@@ -11,13 +11,28 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install "google-genai>=2.25.0"
-      - name: Show models
+      - name: Probe TTS models
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          python -c "
+          cat > probe.py << 'EOF'
+          import base64
           from google import genai
           c = genai.Client()
-          for m in c.models.list():
-              print(m.name)
-          "
+          for name in ["gemini-3.8-flash-tts", "models/gemini-3.8-flash-tts", "gemini-3.8-flash-lite-tts"]:
+              try:
+                  i = c.interactions.create(
+                      model=name,
+                      input=[{"type": "user_input", "content": [{
+                          "type": "text", "text": "Testing one two three.",
+                          "annotations": [{"type": "speech_metadata", "style": "monotone and flat"}]}]}],
+                      response_format={"type": "audio"},
+                      generation_config={"speech_config": [{"voice": "Kore"}]},
+                  )
+                  n = len(base64.b64decode(i.output_audio.data))
+                  print("OK", name, n, "bytes")
+                  break
+              except Exception as e:
+                  print("FAIL", name, str(e)[:200])
+          EOF
+          python probe.py
