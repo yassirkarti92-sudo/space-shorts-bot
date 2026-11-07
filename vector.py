@@ -244,7 +244,9 @@ def _view(w, h, kind, t):
         bw = w / 6
         for i in range(6):
             bh = h * rng.uniform(0.25, 0.6)
-            d.rectangle([i * bw, h - bh, i * bw + bw - 4, h], fill=(26, 28, 44))
+            x0 = int(i * bw) 
+            x1 = max(x0, int(i * bw + bw - 4))  
+            d.rectangle([x0, h - bh, x1, h], fill=(26, 28, 44))
             for _ in range(5):
                 wx = i * bw + rng.uniform(6, max(7, bw - 16))
                 wy = h - bh + rng.uniform(8, max(9, bh - 14))
