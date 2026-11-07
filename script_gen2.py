@@ -20,7 +20,7 @@ import vector
 GEMINI_MODELS = [m.strip() for m in os.environ.get(
     "GEMINI_TEXT_MODELS", "gemini-3.8-flash,gemini-3.5-flash,gemini-flash-latest").split(",")
     if m.strip()]
-GEMINI_TIMEOUT = 75
+GEMINI_TIMEOUT = 120
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent"
 GROQ_BASE = "https://api.groq.com/openai/v1"
 GROQ_MODELS = ["llama-3.3-70b-versatile", "openai/gpt-oss-120b", "openai/gpt-oss-20b", "llama-3.1-8b-instant"]
@@ -73,7 +73,8 @@ camera: push, pull, static.
 Each scene has 6 to 14 elements. x and y are the CENTRE of the element. x is percent of the screen width
 (0 left, 100 right). y is percent of the picture area (0 top, 100 bottom of the picture area). Captions have
 their own space at the bottom, so you cannot cover them. Sizes s and h are percent of the screen width.
-Colour names: navy, slate, gray, cyan, mint, amber, red, white, cream, dark, purple, brown, blue.
+ONLY these colour names exist (no gold, no yellow, no orange, no green): navy, slate, gray, cyan, mint,
+amber, red, white, cream, dark, purple, brown, blue. Use amber for gold or yellow.
 
 SCENERY (draw these first, in this order: sky, far objects, ground or sea, near objects):
 - sky: style (day, dusk, night, storm, red, space). No x, y, s. Always the first element.
@@ -217,9 +218,11 @@ def ask_groq(system, user):
         if _groq_model is None:
             raise RuntimeError("no preferred Groq model is available")
         print("Using Groq model:", _groq_model)
-    body = {"model": _groq_model, "temperature": 0.8,
+    body = {"model": _groq_model, "temperature": 0.8, "max_tokens": 8000,
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
             "response_format": {"type": "json_object"}}
+    if "gpt-oss" in _groq_model:
+        body["reasoning_effort"] = "low"
     try:
         res = _groq("/chat/completions", body)
     except RuntimeError as e:
@@ -227,7 +230,44 @@ def ask_groq(system, user):
             raise
         del body["response_format"]
         res = _groq("/chat/completions", body)
-    return _json_from(res["choices"][0]["message"]["content"])
+    content = res["choices"][0]["message"].get("content")
+    if not content:
+        raise RuntimeError("Groq returned an empty answer")
+    return _json_from(content)
+
+
+# ---------- scene repair ----------
+ALIAS = {"gold": "amber", "yellow": "amber", "orange": "amber", "coral": "red", "pink": "red",
+         "green": "mint", "sky": "cyan", "lightblue": "cyan", "teal": "cyan", "black": "dark",
+         "void": "dark", "grey": "gray", "silver": "gray", "tan": "cream", "beige": "cream",
+         "violet": "purple", "indigo": "purple"}
+BGMAP = {"space": "void", "night": "void", "black": "void", "dark": "void", "sunset": "dusk",
+         "orange": "dusk", "blue": "navy", "ocean": "teal", "sea": "teal", "gray": "slate",
+         "grey": "slate", "red": "dusk"}
+
+
+def repair_spec(spec):
+    """Fix small mistakes (unknown colour or background names, too few elements) instead of rejecting."""
+    if not isinstance(spec, dict):
+        return spec
+    spec = dict(spec)
+    bg = str(spec.get("background", "navy")).lower()
+    spec["background"] = bg if bg in vector.BACKGROUNDS else BGMAP.get(bg, "navy")
+    if spec.get("camera", "push") not in vector.CAMERAS:
+        spec["camera"] = "push"
+    els = [dict(e) for e in (spec.get("elements") or []) if isinstance(e, dict) and e.get("type") in vector.TYPES]
+    for e in els:
+        for k in ("color", "body", "head", "hair"):
+            if k in e:
+                c = str(e[k]).lower()
+                e[k] = c if c in vector.COLORS else ALIAS.get(c, "gray")
+    if len([e for e in els if e.get("type") != "timer"]) < 3:
+        if not any(e.get("type") == "sky" for e in els):
+            els.insert(0, {"type": "sky", "style": "night"})
+        if not any(e.get("type") in ("ground", "sea") for e in els):
+            els.insert(1, {"type": "ground", "style": "dark", "x": 50, "y": 78, "s": 100})
+    spec["elements"] = els[:vector.MAX_ELEMENTS]
+    return spec
 
 
 # ---------- validation ----------
@@ -257,6 +297,7 @@ def validate(data):
                     and 0 <= fx["at"] <= 8):
                 sfx.append({"type": fx["type"], "at": float(fx["at"])})
         spec = s.get("spec")
+        spec = repair_spec(spec)
         ok, why = vector.check_scene(spec) if spec else (False, "no spec")
         if not ok:
             print(f"scene {i}: broken ({why}), a safe fallback scene will be used")
@@ -283,7 +324,7 @@ def generate(recent):
     engines = []
     if os.environ.get("GEMINI_API_KEY"):
         for m in GEMINI_MODELS:
-            engines.append((m, functools.partial(ask_gemini, model=m), 3))
+            engines.append((m, functools.partial(ask_gemini, model=m), 2))
     if os.environ.get("GROQ_API_KEY"):
         engines.append(("Groq", ask_groq, 3))
     if not engines:
@@ -302,6 +343,7 @@ def generate(recent):
                 print(f"{name} attempt {n} failed:", str(e)[:200])
                 if n < tries:
                     time.sleep(60 if "429" in str(e) else 20)
+    raise SystemExit("Script generation failed - nothing posted.")
 
 
 if __name__ == "__main__":
