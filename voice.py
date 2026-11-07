@@ -8,7 +8,7 @@ MAX_WORDS_PER_REQUEST = 220
 STATUS_FILE = "voice_status.json"
 URL = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent"
 
-STYLE = "monotone and flat, speaking rapidly, deadpan, no emotion"
+STYLE = "calm and warm, steady pace, conversational explainer, gentle cadence, slight pause between story steps"
 
 
 class VoiceLimitReached(Exception):
