@@ -1,4 +1,5 @@
 """Synthesized ambient soundtrack + sound effects + narration: no downloads, no copyright."""
+import math
 import random
 import wave
 
@@ -37,7 +38,7 @@ def read_wav(path):
 
 
 def sfx_signal(kind, ts, nrng):
-    """Return the effect for time array ts (seconds since the effect started)."""
+    """Effect signal for time array ts (seconds since the effect started)."""
     L = len(ts)
     if kind == "whoosh":    # rising rush, about 1.8 s
         env = np.clip(ts / 1.4, 0, 1) ** 2 * np.clip((1.8 - ts) / 0.4, 0, 1)
@@ -49,14 +50,12 @@ def sfx_signal(kind, ts, nrng):
         return np.sin(2 * np.pi * (45 + 12 * x) * ts) * np.sin(np.pi * np.clip(ts / 2.6, 0, 1)) * 0.22
     if kind == "boom":      # falling sub tone + low noise burst
         phase = 2 * np.pi * (35 * ts + 70 * (1 - np.exp(-6 * ts)) / 6)
-        body = np.sin(phase) * np.exp(-2.2 * ts) * 0.7
-        burst = noise(L, 60, nrng) * np.exp(-5 * ts) * 0.35
-        return body + burst
+        return np.sin(phase) * np.exp(-2.2 * ts) * 0.7 + noise(L, 60, nrng) * np.exp(-5 * ts) * 0.35
     return np.zeros(L)
 
 
 def scene_sfx(scene):
-    """List of (kind, animation_seconds). Returns None when the scene has no sfx field."""
+    """List of (kind, seconds). Returns None when the scene has no sfx field."""
     if "sfx" not in scene:
         return None
     raw = scene["sfx"]
@@ -73,22 +72,30 @@ def scene_sfx(scene):
     return out
 
 
-def make_audio(path, plan, scene_len, seed=0, voices=None, narration=None, speed=1.5):
-    """narration: path to ONE wav for the whole video (new pipeline).
-    voices: list of per-scene wavs (old pipeline, still supported).
-    speed: animation speed, so an sfx 'at' in animation seconds lands on the visual."""
+def make_audio(path, plan, scene_len, seed=0, voices=None, narration=None, speed=1.5, durs=None):
+    """durs: list of scene lengths in seconds (new story style). Without it, every scene lasts
+    scene_len and the sound is the same as before.
+    narration: path to ONE wav for the whole video. voices: old per-scene wavs.
+    speed: divides sfx 'at' times (old scenes use animation seconds, new ones pass 1.0)."""
     rng = random.Random(seed)
     nrng = np.random.default_rng(seed)
     n = len(plan)
-    N = int(n * scene_len * SR)
+    story = durs is not None
+    if durs is None:
+        durs = [scene_len] * n
+    starts = [sum(durs[:i]) for i in range(n)]
+    total = sum(durs)
+    N = int(total * SR)
     t = np.arange(N) / SR
     out = np.zeros(N)
     prog = rng.choice(PROGS)
 
-    for i in range(n):
+    block = 8.0 if story else scene_len          # music changes chord once per block
+    nb = int(math.ceil(total / block)) if story else max(1, int(round(total / block)))
+    for i in range(nb):
         root = prog[i % len(prog)]
-        tt = t - (i * scene_len - 0.5)
-        dur = scene_len + 1.0
+        tt = t - (i * block - 0.5)
+        dur = block + 1.0
         env = np.where((tt >= 0) & (tt <= dur),
                        np.minimum(np.minimum(tt, 1.0), np.minimum(dur - tt, 1.0)), 0.0)
         trem = 0.8 + 0.2 * np.sin(2 * np.pi * 0.25 * t + i)
@@ -97,23 +104,27 @@ def make_audio(path, plan, scene_len, seed=0, voices=None, narration=None, speed
             out += 0.045 * env * trem * (np.sin(2 * np.pi * f * t)
                                          + 0.5 * np.sin(2 * np.pi * f * 1.004 * t))
 
-        s0 = int(i * scene_len * SR)
-        L = int(scene_len * SR)
+    for i in range(n):
+        s0 = int(starts[i] * SR)
+        L = min(int(durs[i] * SR), N - s0)
+        if L <= 0:
+            continue
         ts = np.arange(L) / SR
         effects = scene_sfx(plan[i])
         if effects is not None:
-            # new way: effects listed in the scene, each at its own moment
             for kind, at in effects:
                 start = int(at / speed * SR)
                 if start >= L:
                     continue
-                tsub = np.arange(L - start) / SR
-                out[s0 + start:s0 + L] += sfx_signal(kind, tsub, nrng)
+                Lx = (L - start) if kind == "rumble" else int(3.0 * SR)
+                Lx = min(Lx, N - (s0 + start))
+                if Lx <= 0:
+                    continue
+                out[s0 + start:s0 + start + Lx] += sfx_signal(kind, np.arange(Lx) / SR, nrng)
         else:
-            # old way: effect chosen by scene name (unchanged sound)
             kind = plan[i].get("scene")
             if kind == "zoom":
-                out[s0:s0 + L] += noise(L, 25, nrng) * (ts / scene_len) ** 2 * 0.22
+                out[s0:s0 + L] += noise(L, 25, nrng) * (ts / durs[i]) ** 2 * 0.22
             elif kind == "rocket":
                 out[s0:s0 + L] += noise(L, 160, nrng) * np.minimum(1.0, ts / 1.5) * 0.30
             elif kind == "sizes":
@@ -122,9 +133,9 @@ def make_audio(path, plan, scene_len, seed=0, voices=None, narration=None, speed
                                    * np.sin(np.pi * np.clip(ts / 2.6, 0, 1)) * 0.22)
 
     k = 0.4
-    while k < n * scene_len - 1.3:  # sparkle notes
+    while k < total - 1.3:  # sparkle notes
         if rng.random() < 0.7:
-            i = min(int(k // scene_len), n - 1)
+            i = min(int(k // block), nb - 1)
             f = hz(prog[i % len(prog)] + rng.choice(PENTA) + 12)
             a = int(k * SR)
             m = int(1.2 * SR)
@@ -145,8 +156,8 @@ def make_audio(path, plan, scene_len, seed=0, voices=None, narration=None, speed
         else:
             for i, p in enumerate(voices):
                 clip = read_wav(p)
-                a = int((i * scene_len + 0.45) * SR)
-                m = max(0, min(len(clip), N - a, int((scene_len - 0.8) * SR)))
+                a = int((starts[i] + 0.45) * SR)
+                m = max(0, min(len(clip), N - a, int((durs[i] - 0.8) * SR)))
                 v[a:a + m] += clip[:m]
         mask = lowpass((np.abs(v) > 0.02).astype(float), SR // 4)
         out *= 1 - 0.6 * np.clip(mask * 1.5, 0, 1)
