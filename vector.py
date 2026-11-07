@@ -24,7 +24,7 @@ BACKGROUNDS = {
     "dusk": ((38, 30, 62), (110, 70, 90)),
     "void": ((8, 9, 14), (18, 20, 30)),
 }
-TYPES = ("figure", "pod", "window", "skyline", "planet", "disc", "rect", "badge", "text", "clock")
+TYPES = ("figure", "pod", "window", "skyline", "planet", "disc", "rect", "badge", "text", "clock", "timer")
 NEEDS_SIZE = ("figure", "pod", "window", "skyline", "planet", "disc", "rect", "clock")
 VIEWS = ("stars", "city", "planet", "ocean")
 EYES = ("open", "closed", "wide")
@@ -78,8 +78,11 @@ def check_scene(spec):
             kind = e.get("type")
             if kind not in TYPES:
                 return False, f"unknown element type {kind!r}"
-            _num(e.get("x"), -30, 130)
-            _num(e.get("y"), -30, 130)
+            if kind != "timer":
+                _num(e.get("x"), -30, 130)
+                _num(e.get("y"), -30, 130)
+            if "from" in e:
+                _num(e["from"], 0, 9999)
             if kind in NEEDS_SIZE:
                 _num(e.get("s"), 1, 150)
             elif "s" in e:
@@ -244,8 +247,8 @@ def _view(w, h, kind, t):
         bw = w / 6
         for i in range(6):
             bh = h * rng.uniform(0.25, 0.6)
-            x0 = int(i * bw) 
-            x1 = max(x0, int(i * bw + bw - 4))  
+            x0 = int(i * bw)
+            x1 = max(x0, int(i * bw + bw - 4))
             d.rectangle([x0, h - bh, x1, h], fill=(26, 28, 44))
             for _ in range(5):
                 wx = i * bw + rng.uniform(6, max(7, bw - 16))
@@ -323,6 +326,20 @@ def draw_clock(d, e, t, sc):
     d.ellipse([x - 7, y - 7, x + 7, y + 7], fill=COLORS["amber"])
 
 
+def draw_timer(d, e, t, sc):
+    """Digital timer pill locked to the top-right corner (ignores x and y)."""
+    v = e.get("from", 0.0) + max(0.0, t - e.get("at", 0.0))
+    f = font(px(e.get("s", 5.5)) * sc)
+    label = f"{v:.3f} S"
+    l, tp, r, b = d.textbbox((0, 0), label, font=f)
+    tw, th = r - l, b - tp
+    pad = th * 0.6
+    right, cy = CW - 34, py(9)
+    d.rounded_rectangle([right - tw - 2 * pad, cy - th / 2 - pad * 0.7, right, cy + th / 2 + pad * 0.7],
+                        radius=int(th * 0.6), fill=(8, 9, 14, 220), outline=COLORS["cyan"], width=3)
+    d.text((right - pad - tw / 2, cy), label, font=f, fill=COLORS["cyan"], anchor="mm")
+
+
 def draw_element(img, d, e, t):
     if t < e.get("at", 0.0) or t > e.get("until", 999):
         return
@@ -342,6 +359,8 @@ def draw_element(img, d, e, t):
         draw_planet(d, e, t, sc)
     elif kind == "clock":
         draw_clock(d, e, t, sc)
+    elif kind == "timer":
+        draw_timer(d, e, t, sc)
     elif kind == "disc":
         x, y = place(e, t)
         r = px(e["s"]) * sc / 2
