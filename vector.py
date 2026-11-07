@@ -442,4 +442,4 @@ def render_scene(spec, lt, dur):
     x0, y0 = (CW - w) / 2, (CH - h) / 2
     return img.resize((OUT_W, OUT_H), Image.BICUBIC, box=(x0, y0, x0 + w, y0 + h))
 import motion
-motion.install(globals())s
+motion.install(globals())
