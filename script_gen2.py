@@ -69,7 +69,7 @@ scene (0 to 4). Use a boom only for the biggest moments.
 
 SCENE DRAWING (our own code draws it, you only describe it)
 background: navy, slate, teal, dusk, void (use a "sky" element on top of it when you want a sky).
-camera: push, pull, static.
+camera: push, pull, static, push_fast, pan_left, pan_right, shake.
 Each scene has 6 to 14 elements. x and y are the CENTRE of the element. x is percent of the screen width
 (0 left, 100 right). y is percent of the picture area (0 top, 100 bottom of the picture area). Captions have
 their own space at the bottom, so you cannot cover them. Sizes s and h are percent of the screen width.
@@ -89,6 +89,8 @@ SCENERY (draw these first, in this order: sky, far objects, ground or sea, near 
 CHARACTER:
 - figure: x, y, s (40 to 55: the figure must be BIG), body (colour), head (use gray), eyes (open, closed,
   wide), pose (stand, lie), arm_up (true/false), angle (degrees). The main character is "you".
+  act (walk, run, panic, wave, point), flip (true faces left).
+  Use act in most scenes: walk or run when you move, panic in danger, point to show things.
 
 SYMBOLS AND TEXT:
 - icon: icon (drop, flame, bolt, thermometer, house, heart, warning, hourglass), x, y, s (10 to 20), color.
@@ -106,6 +108,8 @@ SYMBOLS AND TEXT:
 Optional fields for any element: at (seconds when it appears), until (seconds when it disappears),
 move_to [x, y] with move_at and move_time (seconds), shake (0 to 5), bob (0 to 5), pop (false turns
 the pop-in off).
+Motion fields for any element: enter (left, right, up, down: slides in from that side),
+drift [dx, dy] (slow slide, percent per second), pulse (0.05 to 0.2: beating size). Use enter on most objects.
 
 Rules for drawing:
 - Every scene is a full picture: a sky or background, scenery (ground, sea, city, mountain...), the figure,
