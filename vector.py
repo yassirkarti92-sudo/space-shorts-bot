@@ -6,6 +6,8 @@ import random
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
+import scenery
+
 CW, CH = 540, 960
 OUT_W, OUT_H = 1080, 1920
 # Scene y positions (0..100) map to the TOP part of the screen only. The bottom
@@ -33,7 +35,10 @@ VIEWS = ("stars", "city", "planet", "ocean")
 EYES = ("open", "closed", "wide")
 POSES = ("stand", "lie")
 CAMERAS = ("push", "pull", "static")
-MAX_ELEMENTS = 16
+MAX_ELEMENTS = 22
+MIN_ELEMENTS = 4
+TYPES = TYPES + scenery.TYPES
+NEEDS_SIZE = NEEDS_SIZE + scenery.NEEDS_SIZE
 
 
 def ease(x):
@@ -77,11 +82,13 @@ def check_scene(spec):
         els = spec.get("elements")
         if not isinstance(els, list) or not 1 <= len(els) <= MAX_ELEMENTS:
             return False, "elements must be a list of 1 to %d" % MAX_ELEMENTS
+        if sum(1 for e in els if isinstance(e, dict) and e.get("type") != "timer") < MIN_ELEMENTS:
+            return False, "scene too empty"
         for e in els:
             kind = e.get("type")
             if kind not in TYPES:
                 return False, f"unknown element type {kind!r}"
-            if kind != "timer":
+            if kind not in ("timer", "sky", "particles"):
                 _num(e.get("x"), -30, 130)
                 _num(e.get("y"), -30, 130)
             if "from" in e:
@@ -113,6 +120,9 @@ def check_scene(spec):
             if kind in ("badge", "text"):
                 if not isinstance(e.get("text"), str) or not 1 <= len(e["text"]) <= 24:
                     return False, "text must be 1 to 24 characters"
+            ok, why = scenery.check(e)
+            if not ok:
+                return False, why
             if kind == "window" and e.get("view", "stars") not in VIEWS:
                 return False, "unknown window view"
             if kind == "figure":
@@ -242,7 +252,7 @@ def figure_layer(Hf, body, head, hair, eyes, arm_up):
 def draw_figure(img, e, t, sc):
     x, y = place(e, t)
     Hf = px(e["s"]) * sc
-    layer = figure_layer(Hf, COLORS[e.get("body", "cyan")], COLORS[e.get("head", "gray")],
+    layer = figure_layer(Hf, COLORS[e.get("body", "cyan")], COLORS[{"skin": "gray"}.get(e.get("head", "gray"), e.get("head", "gray"))],
                          COLORS[e.get("hair", "dark")], e.get("eyes", "open"), e.get("arm_up", False))
     angle = e.get("angle", 0) + (90 if e.get("pose") == "lie" else 0)
     if angle:
@@ -370,10 +380,16 @@ def draw_timer(d, e, t, sc):
 def draw_element(img, d, e, t):
     if t < e.get("at", 0.0) or t > e.get("until", 999):
         return
-    sc = pop_scale(e, t)
+    kind = e["type"]
+    sc = 1.0 if kind in scenery.STATIC else pop_scale(e, t)
     if sc <= 0.02:
         return
-    kind = e["type"]
+    if kind in scenery.TYPES:
+        x, y = (0, 0) if kind in ("sky", "particles") else place(e, t)
+        w = px(e.get("s", 10)) * sc
+        h = px(e.get("h", e.get("s", 10))) * sc
+        scenery.draw(img, d, e, x, y, w, h, t)
+        return
     if kind == "figure":
         draw_figure(img, e, t, sc)
     elif kind == "pod":
