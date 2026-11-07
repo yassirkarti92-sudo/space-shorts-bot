@@ -123,6 +123,8 @@ Rules for drawing:
 - Use a badge for every number or date mentioned in the narration.
 - Only use the types, colours and values listed here. Anything else makes the scene unusable.
 - Time values are in seconds and must stay between 0 and 6.
+- Every element is a FLAT object with a "type" key, like {"type": "sky", "style": "night"}.
+  Never wrap it like {"sky": {...}}.
 """
 
 
@@ -259,7 +261,8 @@ def repair_spec(spec):
     spec["background"] = bg if bg in vector.BACKGROUNDS else BGMAP.get(bg, "navy")
     if spec.get("camera", "push") not in vector.CAMERAS:
         spec["camera"] = "push"
-    els = [dict(e) for e in (spec.get("elements") or []) if isinstance(e, dict) and e.get("type") in vector.TYPES]
+    els = [_flatten(e) for e in (spec.get("elements") or [])]
+    els = [e for e in els if isinstance(e, dict) and e.get("type") in vector.TYPES]
     for e in els:
         for k in ("color", "body", "head", "hair"):
             if k in e:
@@ -272,6 +275,20 @@ def repair_spec(spec):
             els.insert(1, {"type": "ground", "style": "dark", "x": 50, "y": 78, "s": 100})
     spec["elements"] = els[:vector.MAX_ELEMENTS]
     return spec
+def _flatten(e):
+    """Unwrap {"sky": {"style": "night"}} into {"type": "sky", "style": "night"}.
+    Elements that already have a "type" key are returned unchanged."""
+    if not isinstance(e, dict):
+        return e
+    if "type" in e:
+        return dict(e)
+    if len(e) == 1:
+        k, v = next(iter(e.items()))
+        if k in vector.TYPES and isinstance(v, dict):
+            out = dict(v)
+            out["type"] = k
+            return out
+    return dict(e)
 
 
 # ---------- validation ----------
