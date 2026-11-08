@@ -276,6 +276,10 @@ def repair_spec(spec):
         spec["camera"] = "push"
     els = [_flatten(e) for e in (spec.get("elements") or [])]
     els = [e for e in els if isinstance(e, dict) and e.get("type") in vector.TYPES]
+    if place:        
+        els = [e for e in els if e.get("type") not in                
+               ("sky", "ground", "sea", "city", "mountain", "cloud", "sun", "moon", 
+"tree")]
     for e in els:
         for k in ("color", "body", "head", "hair"):
             if k in e:
