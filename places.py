@@ -29,6 +29,8 @@ PALETTE = {
     "navy": (22, 25, 36),
     "dark": (30, 30, 40),
     "white": (255, 255, 255),
+    "skin": (242, 205, 165),
+    "hair": (60, 40, 30),
 }
 FALLBACK_COLOR = (255, 0, 255)  # unknown colour name -> magenta, easy to spot
 
@@ -95,6 +97,21 @@ def draw_place(places, name, size=(540, 960), extra_shapes=None, palette=None):
     if extra_shapes:
         draw_shapes(img, extra_shapes, scale, palette)
     return img.convert("RGB")
+
+
+def draw_character(chars, name, height_px, colors=None):
+    """Return a transparent RGBA image of character `name`, `height_px` tall."""
+    if name not in chars:
+        raise KeyError(f"unknown character: {name}")
+    ch = chars[name]
+    k = height_px / ch.get("h", 100)
+    size = (max(1, int(round(ch.get("w", 60) * k))), max(1, int(round(ch.get("h", 100) * k))))
+    palette = dict(PALETTE)
+    if colors:
+        palette.update(colors)
+    img = Image.new("RGBA", size, (0, 0, 0, 0))
+    draw_shapes(img, ch["shapes"], k, palette)
+    return img
 
 
 if __name__ == "__main__":
