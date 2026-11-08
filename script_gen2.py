@@ -112,6 +112,18 @@ Motion fields for any element: enter (left, right, up, down: slides in from that
 drift [dx, dy] (slow slide, percent per second), pulse (0.05 to 0.2: beating size). Use enter on most objects.
 
 Rules for drawing:
+PLACES (our code draws the whole background, you only pick the name)
+Add "place" to the spec to use one. Allowed names (exact):
+- street_day: city street, daytime, buildings, cars, sidewalk
+- street_night: same street at night, lit windows, street lamps
+- alley_dark: dark narrow alley, bins, one lamp
+- crossroads_traffic_lights: crossroads with traffic lights, crosswalk, cars
+When a scene has a place:
+- Do NOT use sky, ground, sea, city, mountain, cloud, sun, moon or tree. The place already has them.
+- Use only 3 to 8 elements: figure, icon, arrow, badge, text, particles, crowd, rect, disc.
+- Put the figure at y 100 and s 45, so it stands on the pavement.
+- Keep the badge and text in the top half (y 5 to 60).
+- Use a place only when the narration happens in a street. Other scenes use the old scenery.
 - Every scene is a full picture, but the sky, scenery and objects must match the PLACE of the narration (see the place rule). A falling or floating figure has no ground. Never a big empty area.
 - Every scene must be different from the one before it. Change the sky, the scenery, the camera, the
   objects or the layout. Never reuse the same scene twice in a row.
@@ -257,6 +269,10 @@ def repair_spec(spec):
     spec = dict(spec)
     bg = str(spec.get("background", "navy")).lower()
     spec["background"] = bg if bg in vector.BACKGROUNDS else BGMAP.get(bg, "navy")
+    place = spec.get("place")
+    if place is not None and place not in vector._load_places():
+        place = None
+        spec.pop("place", None)
     if spec.get("camera", "push") not in vector.CAMERAS:
         spec["camera"] = "push"
     els = [_flatten(e) for e in (spec.get("elements") or [])]
@@ -266,7 +282,7 @@ def repair_spec(spec):
             if k in e:
                 c = str(e[k]).lower()
                 e[k] = c if c in vector.COLORS else ALIAS.get(c, "gray")
-    if len([e for e in els if e.get("type") != "timer"]) < 3:
+    if len([e for e in els if e.get("type") != "timer"]) < 3 and not place:
         if not any(e.get("type") == "sky" for e in els):
             els.insert(0, {"type": "sky", "style": "night"})
         if not any(e.get("type") in ("ground", "sea") for e in els):
