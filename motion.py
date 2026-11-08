@@ -125,7 +125,7 @@ def render_scene(spec, lt, dur):
     if use_place:
         img = g["places"].draw_place(g["_load_places"](), name, size=(CW, CH))
     else:
-    img = g["_gradient"](spec.get("background", "navy"))
+        img = g["_gradient"](spec.get("background", "navy"))
     d = ImageDraw.Draw(img, "RGBA")
     if not use_place:
         g["draw_dust"](d, lt)
