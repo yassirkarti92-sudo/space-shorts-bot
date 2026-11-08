@@ -107,8 +107,15 @@ def draw_figure(img, e, t, sc):
     C = g["COLORS"]
     head = e.get("head", "gray")
     head = "gray" if head == "skin" else head
-    layer = figure_layer(Hf, C[e.get("body", "cyan")], C[head], C[e.get("hair", "dark")],
-                         e.get("eyes", "open"), e.get("arm_up", False), act, t)
+    chars = g["_load_places"]()
+    outfit = e.get("outfit")
+    if outfit not in chars or not str(outfit).startswith("male_"):
+        outfit = "male_casual_tshirt_jeans"
+    if outfit in chars:
+        layer = g["places"].draw_character(chars, outfit, Hf)
+    else:
+        layer = figure_layer(Hf, C[e.get("body", "cyan")], C[head], C[e.get("hair", "dark")],
+                             e.get("eyes", "open"), e.get("arm_up", False), act, t)
     if e.get("flip"):
         layer = layer.transpose(Image.FLIP_LEFT_RIGHT)
     angle = e.get("angle", 0) + (90 if e.get("pose") == "lie" else 0)
