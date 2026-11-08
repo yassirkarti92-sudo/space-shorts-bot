@@ -120,9 +120,15 @@ def draw_figure(img, e, t, sc):
 def render_scene(spec, lt, dur):
     g = _g
     CW, CH = g["CW"], g["CH"]
+    name = spec.get("place")
+    use_place = bool(name) and name in g["_load_places"]()
+    if use_place:
+        img = g["places"].draw_place(g["_load_places"](), name, size=(CW, CH))
+    else:
     img = g["_gradient"](spec.get("background", "navy"))
     d = ImageDraw.Draw(img, "RGBA")
-    g["draw_dust"](d, lt)
+    if not use_place:
+        g["draw_dust"](d, lt)
     for e in spec["elements"]:
         g["draw_element"](img, d, e, lt)
     p = min(1.0, max(0.0, lt / max(dur, 0.1)))
