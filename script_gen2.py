@@ -111,7 +111,7 @@ the pop-in off).
 Motion fields for any element: enter (left, right, up, down: slides in from that side),
 drift [dx, dy] (slow slide, percent per second), pulse (0.05 to 0.2: beating size). Use enter on most objects.
 
-Rules for drawing:
+
 PLACES (our code draws the whole background, you only pick the name)
 Add "place" to the spec to use one. Allowed names (exact):
 - street_day: city street, daytime, buildings, cars, sidewalk
@@ -123,7 +123,7 @@ When a scene has a place:
 - Use only 3 to 8 elements: figure, icon, arrow, badge, text, particles, crowd, rect, disc.
 - Put the figure at y 100 and s 45, so it stands on the pavement.
 - Keep the badge and text in the top half (y 5 to 60).
-- Use a place in EVERY scene that happens on Earth, in a city or outdoors. Pick the closest one. Only scenes in space, underground, inside the body or in water use the old scenery.- Every scene is a full picture, but the sky, scenery and objects must match the PLACE of the narration (see the place rule). A falling or floating figure has no ground. Never a big empty area.
+- Use a place in EVERY scene that happens on Earth, in a city or outdoors. Pick the closest one. Only scenes in space, underground, inside the body or in water use the old scenery.  Rules for drawing: - Every scene is a full picture, but the sky, scenery and objects must match the PLACE of the narration (see the place rule). A falling or floating figure has no ground. Never a big empty area.
 - Every scene must be different from the one before it. Change the sky, the scenery, the camera, the
   objects or the layout. Never reuse the same scene twice in a row.
 - Show the place and the danger of the narration with scenery and icons (a flooded city = city + sea +
