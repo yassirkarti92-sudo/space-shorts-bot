@@ -57,7 +57,7 @@ Each scene object:
   "narration": "the exact words spoken in this scene (about 9 to 11 words)",
   "caption": "max 10 words, one *highlighted* word",
   "sfx": [{"type": "whoosh", "at": 0}],
-  "spec": {"background": "navy", "camera": "push", "elements": [ ... ]}
+  "spec": {"background": "navy", "camera": "push", "place": "street_day", "elements": [ ... ]}
 }
 
 Total narration of all scenes: 165 to 185 words. Narration and caption of a scene say the same thing.
