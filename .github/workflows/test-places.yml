@@ -1,0 +1,30 @@
+name: test-places
+on:
+  workflow_dispatch:
+    inputs:
+      subject:
+        description: "Subject of the test video"
+        required: true
+        default: "What if gravity doubled overnight?"
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg fonts-dejavu-core
+      - run: pip install -r requirements.txt faster-whisper
+      - run: python -u test_places.py
+        env:
+          SUBJECT: ${{ github.event.inputs.subject }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: places-test
+          path: pipeline_test_places.mp4
