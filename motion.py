@@ -10,6 +10,8 @@ from PIL import Image, ImageDraw, ImageFilter
 _g = {}
 ACTS = ("walk", "run", "panic", "wave", "point")
 NEW_CAMERAS = ("push_fast", "pan_left", "pan_right", "shake")
+PLACE_SHIFT = 150   # pixels the place picture moves up
+FEET_Y = 590        # canvas y (of 960) where the man's feet stand
 
 
 def _pill(d, x0, y0, x1, y1, w, fill):
@@ -121,6 +123,8 @@ def draw_figure(img, e, t, sc):
     angle = e.get("angle", 0) + (90 if e.get("pose") == "lie" else 0)
     if angle:
         layer = layer.rotate(angle, resample=Image.BICUBIC, expand=True)
+    if g.get("_feet") is not None and outfit in chars:
+        y = g["_feet"] - layer.height / 2
     img.paste(layer, (int(x - layer.width / 2), int(y - layer.height / 2)), layer)
 
 
@@ -131,7 +135,14 @@ def render_scene(spec, lt, dur):
     use_place = bool(name) and name in g["_load_places"]()
     if use_place:
         img = g["places"].draw_place(g["_load_places"](), name, size=(CW, CH))
+        strip = img.crop((0, CH - 12, CW, CH)).resize((CW, PLACE_SHIFT))
+        moved = Image.new("RGB", (CW, CH))
+        moved.paste(img.crop((0, PLACE_SHIFT, CW, CH)), (0, 0))
+        moved.paste(strip, (0, CH - PLACE_SHIFT))
+        img = moved
+        g["_feet"] = FEET_Y
     else:
+        g["_feet"] = None
         img = g["_gradient"](spec.get("background", "navy"))
     d = ImageDraw.Draw(img, "RGBA")
     if not use_place:
