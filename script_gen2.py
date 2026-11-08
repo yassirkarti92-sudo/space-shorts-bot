@@ -112,14 +112,12 @@ Motion fields for any element: enter (left, right, up, down: slides in from that
 drift [dx, dy] (slow slide, percent per second), pulse (0.05 to 0.2: beating size). Use enter on most objects.
 
 Rules for drawing:
-- Every scene is a full picture: a sky or background, scenery (ground, sea, city, mountain...), the figure,
-  and at least one icon, arrow or badge that shows the point of the sentence. Never a figure with two plain
-  circles. Never a big empty area.
+- Every scene is a full picture, but the sky, scenery and objects must match the PLACE of the narration (see the place rule). A falling or floating figure has no ground. Never a big empty area.
 - Every scene must be different from the one before it. Change the sky, the scenery, the camera, the
   objects or the layout. Never reuse the same scene twice in a row.
-- Place the figure standing on the ground or sea line when there is one. Keep it between x 25 and 75.
 - Show the place and the danger of the narration with scenery and icons (a flooded city = city + sea +
   warning icon), not with abstract shapes.
+  - Keep the figure between x 25 and 75. Stand it on the ground only if the scene has ground.
 - Use a badge for every number or date mentioned in the narration.
 - Only use the types, colours and values listed here. Anything else makes the scene unusable.
 - Time values are in seconds and must stay between 0 and 6.
