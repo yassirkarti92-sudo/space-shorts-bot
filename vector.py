@@ -15,7 +15,7 @@ _PLACES = {}
 
 def _load_places():
     if not _PLACES:
-        for f in glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "*.json")):
+        for f in glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), "assests", "*.json")):
             try:
                 for k, v in places.load_places(f).items():
                     if isinstance(v, dict) and "shapes" in v:
