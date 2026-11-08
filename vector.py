@@ -7,6 +7,22 @@ import random
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 import scenery
+import glob, json, os
+import places
+
+_PLACES = {}
+
+
+def _load_places():
+    if not _PLACES:
+        for f in glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "*.json")):
+            try:
+                for k, v in places.load_places(f).items():
+                    if isinstance(v, dict) and "shapes" in v:
+                        _PLACES[k] = v
+            except Exception as ex:
+                print("place file skipped:", f, ex)
+    return _PLACES
 
 CW, CH = 540, 960
 OUT_W, OUT_H = 1080, 1920
@@ -430,9 +446,14 @@ def draw_element(img, d, e, t):
 
 def render_scene(spec, lt, dur):
     """Draw scene `spec` at scene time lt (seconds). Returns a 1080x1920 RGB image."""
-    img = _gradient(spec.get("background", "navy"))
+    name = spec.get("place")
+    if name and name in _load_places():
+        img = places.draw_place(_load_places(), name, size=(CW, CH))
+    else:
+        img = _gradient(spec.get("background", "navy"))
     d = ImageDraw.Draw(img, "RGBA")
-    draw_dust(d, lt)
+    if not name:
+        draw_dust(d, lt)
     for e in spec["elements"]:
         draw_element(img, d, e, lt)
     p = min(1.0, max(0.0, lt / max(dur, 0.1)))
