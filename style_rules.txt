@@ -67,11 +67,17 @@ VISUALS
 - Every scene must look different from the one before it.
 
 SCENE COMPOSITION (every scene)
-- Draw order: sky, far objects, ground or sea, figure, then icons, arrows, badges.
   The ground or sea always comes BEFORE the figure.
 - Use ground OR sea, not both, unless the narration needs both.
 - At least 7 elements per scene. At least 2 of them use enter or pulse.
-- The figure stands on the ground or sea line. Never floating.
+PLACE RULE (most important for visuals)
+- Before drawing a scene, decide its PLACE from the narration: surface, underground, tunnel, water, open sky, or space.
+- Use only scenery that exists in that place.
+  Surface: sky, ground, mountain, city, tree, cloud.
+  Underground or tunnel: no sky, no cloud, no mountain, no moon. Use ground (rock, dark, lava), rect for walls, icons.
+  Space: sky style space, earth, moon, planet. No ground.
+- If the narration says fall, float, fly, drift or swing, the scene has NO ground and NO sea. The figure sits in open space (y 35 to 55).
+- If the narration names an object (watch, door, tunnel), draw it with a matching element (clock, rect, icon). Never replace it with another icon.
 - Draw the key object of the sentence (compass, cabin, rocket) with icons or shapes.
   Never replace it with a heart icon.
 - Vary the figure: act (walk, run, point, wave, stand), body colour, flip.
