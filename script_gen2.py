@@ -293,7 +293,12 @@ def repair_spec(spec):
         els = [e for e in els if e.get("type") not in                
                ("sky", "ground", "sea", "city", "mountain", "cloud", "sun", "moon", 
 "tree")]
+    if any(e.get("type") == "figure" for e in els):
+        els = [e for e in els if e.get("type") != "rect"]
     for e in els:
+        if e.get("type") == "figure":
+            e["pose"] = "stand"
+            e.pop("angle", None)
         for k in ("color", "body", "head", "hair"):
             if k in e:
                 c = str(e[k]).lower()
