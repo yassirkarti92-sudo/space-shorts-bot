@@ -121,10 +121,20 @@ Add "place" to the spec to use one. Allowed names (exact):
 - ruined_city_street: destroyed city street after a disaster, broken buildings, rubble, dusty light 
 - burning_building_street: city street at night with burning buildings, fire, smoke 
 - abandoned_hospital: empty abandoned hospital corridor, bed, dim light
+- flooded_street: city street flooded with water, cars in the water, grey sky
+- spaceship_interior: inside a spaceship, big window, control panels, floor (the ONLY space place where the figure can stand)
+- spaceship_exterior: a spaceship flying in space, no figure
+- space_deep: deep space, stars and nebula, no figure
+- planet_mars: surface of Mars, red sky, rocks, no figure
+- planet_jupiter: Jupiter cloud bands and the Great Red Spot, no figure
+- planet_saturn: Saturn with its rings, no figure
+- planet_venus: Venus surface, yellow toxic sky, volcano, lava cracks, no figure
+- sun_closeup: giant sun filling the screen, no figure
+- solar_system: sun and planets on orbits, no figure
 When a scene has a place:
 - Do NOT use sky, ground, sea, city, mountain, cloud, sun, moon or tree. The place already has them.
 - Use only 3 to 8 elements: figure, icon, arrow, badge, text, particles, crowd, rect, disc.
-- Put the figure at y 100 and s 45, so it stands on the pavement.
+- Put the figure at y 100 and s 45, so it stands on the pavement. Use a figure ONLY in street places, ruins, abandoned_hospital, flooded_street and spaceship_interior. Never pose lie or angle.
 - Keep the badge and text in the top half (y 5 to 60).
 - Plan the story around these places. Choose the place that best matches what the narration says in each scene (disaster = ruined_city_street or burning_building_street, hospital or illness = abandoned_hospital, night = street_night or alley_dark). Change place between scenes when the location changes. Use a place in EVERY scene that happens on Earth, in a city or outdoors. Only scenes in space, underground, inside the body or in water use the old scenery.  Rules for drawing: - Every scene is a full picture, but the sky, scenery and objects must match the PLACE of the narration (see the place rule). A falling or floating figure has no ground. Never a big empty area.
 - Every scene must be different from the one before it. Change the sky, the scenery, the camera, the
