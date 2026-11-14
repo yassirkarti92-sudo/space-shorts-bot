@@ -90,7 +90,7 @@ CHARACTER:
 - figure: x, y, s (40 to 55: the figure must be BIG), body (colour), head (use gray), eyes (open, closed,
   wide), pose (stand, lie), arm_up (true/false), angle (degrees). The main character is "you".
   act (walk, run, panic, wave, point), flip (true faces left).
-  Use act in most scenes: walk or run when you move, panic in danger, point to show things.
+  Use act in most scenes: walk or run when you move, panic in danger, point to show things.   outfit (the clothes of the figure, pick the one that fits the story): male_casual_tshirt_jeans (default),   male_hoodie_sneakers (young, street), male_suit_tie (cop, detective, boss, office, doctor),   male_pajamas (bedroom, night, sick), male_winter_coat_scarf (cold, snow), male_swimsuit (beach, sea),   male_tracksuit (sport, run), male_apron_shirt (cook, worker, shop).
 
 SYMBOLS AND TEXT:
 - icon: icon (drop, flame, bolt, thermometer, house, heart, warning, hourglass), x, y, s (10 to 20), color.
@@ -117,13 +117,16 @@ Add "place" to the spec to use one. Allowed names (exact):
 - street_day: city street, daytime, buildings, cars, sidewalk
 - street_night: same street at night, lit windows, street lamps
 - alley_dark: dark narrow alley, bins, one lamp
-- crossroads_traffic_lights: crossroads with traffic lights, crosswalk, cars
+- crossroads_traffic_lights: crossroads with traffic lights, crosswalk, cars 
+- ruined_city_street: destroyed city street after a disaster, broken buildings, rubble, dusty light 
+- burning_building_street: city street at night with burning buildings, fire, smoke 
+- abandoned_hospital: empty abandoned hospital corridor, bed, dim light
 When a scene has a place:
 - Do NOT use sky, ground, sea, city, mountain, cloud, sun, moon or tree. The place already has them.
 - Use only 3 to 8 elements: figure, icon, arrow, badge, text, particles, crowd, rect, disc.
 - Put the figure at y 100 and s 45, so it stands on the pavement.
 - Keep the badge and text in the top half (y 5 to 60).
-- Use a place in EVERY scene that happens on Earth, in a city or outdoors. Pick the closest one. Only scenes in space, underground, inside the body or in water use the old scenery.  Rules for drawing: - Every scene is a full picture, but the sky, scenery and objects must match the PLACE of the narration (see the place rule). A falling or floating figure has no ground. Never a big empty area.
+- Plan the story around these places. Choose the place that best matches what the narration says in each scene (disaster = ruined_city_street or burning_building_street, hospital or illness = abandoned_hospital, night = street_night or alley_dark). Change place between scenes when the location changes. Use a place in EVERY scene that happens on Earth, in a city or outdoors. Only scenes in space, underground, inside the body or in water use the old scenery.  Rules for drawing: - Every scene is a full picture, but the sky, scenery and objects must match the PLACE of the narration (see the place rule). A falling or floating figure has no ground. Never a big empty area.
 - Every scene must be different from the one before it. Change the sky, the scenery, the camera, the
   objects or the layout. Never reuse the same scene twice in a row.
 - Show the place and the danger of the narration with scenery and icons (a flooded city = city + sea +
