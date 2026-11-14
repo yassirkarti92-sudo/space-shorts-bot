@@ -121,7 +121,8 @@ Add "place" to the spec to use one. Allowed names (exact):
 - ruined_city_street: destroyed city street after a disaster, broken buildings, rubble, dusty light 
 - burning_building_street: city street at night with burning buildings, fire, smoke 
 - abandoned_hospital: empty abandoned hospital corridor, bed, dim light
-- flooded_street: city street flooded with water, cars in the water, grey sky
+- flooded_street: city street flooded with water, cars in the water, grey sky 
+- bedroom: bedroom at night, bed, window with moon, lamp (use it for waking up, sleeping, home scenes; the figure stands next to the bed, never lying on it)
 - spaceship_interior: inside a spaceship, big window, control panels, floor (the ONLY space place where the figure can stand)
 - spaceship_exterior: a spaceship flying in space, no figure
 - space_deep: deep space, stars and nebula, no figure
