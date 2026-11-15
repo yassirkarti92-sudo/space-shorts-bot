@@ -1,0 +1,48 @@
+name: test-voice
+
+on:
+  workflow_dispatch:
+    inputs:
+      video_url:
+        description: "Reel/video URL (leave empty to use test/sample.mp4)"
+        required: false
+        default: ""
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-dejavu-core fonts-noto-color-emoji
+          pip install pillow yt-dlp google-genai edge-tts
+
+      - name: Get video
+        run: |
+          mkdir -p downloads
+          if [ -n "${{ inputs.video_url }}" ]; then
+            yt-dlp -o "downloads/test.%(ext)s" "${{ inputs.video_url }}"
+          else
+            cp test/sample.mp4 downloads/test.mp4
+          fi
+          ls -la downloads
+
+      - name: Add hook
+        run: python add_text.py
+
+      - name: Add voice
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python add_voice.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-video
+          path: downloads/*
